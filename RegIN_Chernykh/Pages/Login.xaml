@@ -9,30 +9,94 @@
       Title="Login"
       xmlns:uc="clr-namespace:RegIN_Chernykh.Elements"
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-      TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-      TextElement.FontWeight="Regular"
-      TextElement.FontSize="13"
-      TextOptions.TextFormattingMode="Ideal"
-      TextOptions.TextRenderingMode="Auto"
-      Background="{DynamicResource MaterialDesignPaper}"
-      FontFamily="{DynamicResource MaterialDesignFont}">
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}">
 
     <Grid>
-        <materialDesign:Card Height="400" VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
+        <materialDesign:Card
+        Height="400" 
+        VerticalAlignment="Center" 
+        HorizontalAlignment="Center" 
+        Width="300">
             <Grid>
-                <Image x:Name="User" HorizontalAlignment="Center" Height="100" Margin="32" VerticalAlignment="Top" Width="100" Source="/RegIN_Chernykh;component\Images\ic-user.png">
+                <Image
+                x:Name="IUser"
+                HorizontalAlignment="Center"
+                Height="100"
+                Margin="32"
+                VerticalAlignment="Top"
+                Width="100"
+                Source="/RegIN_Chernykh;component/Images/ic-user.png">
                     <Image.Clip>
-                        <EllipseGeometry RadiusX="50" RadiusY="50" Center="50,50"/>
+                        <EllipseGeometry
+                        RadiusX="50"
+                        RadiusY="50"
+                        Center="50,50"/>
                     </Image.Clip>
                 </Image>
-                <Label x:Name="Username" Margin="10,127,10,0" HorizontalContentAlignment="Center" Content="" VerticalAlignment="Top"/>
-                <Label Content="Enter Login:" Margin="10,161,10,0" VerticalAlignment="Top"/>
-                <TextBox x:Name="TbLogin" Height="23" Margin="10,185,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" KeyUp="SetLogin" LostFocus="SetLogin"/>
-                <uc:ElementCapture x:Name="Capture" HorizontalAlignment="Center" Width="280" Margin="10,213,10,0" Height="100" VerticalAlignment="Top"/>
-                <Label Content="Enter password:" Margin="10,318,10,0" VerticalAlignment="Top"/>
-                <PasswordBox x:Name="PbPassword" Margin="10,342,10,0" VerticalAlignment="Top" Height="26" KeyUp="SetPassword"/>
-                <Label Content="Forgot your password?" Margin="10,373,0,0" VerticalAlignment="Top" Foreground="#FF67AB2F" FontSize="18" MouseDown="RecoveryPassword" HorizontalAlignment="Left" Width="110"/>
-                <Label Content="Registration" Margin="0,373,10,0" VerticalAlignment="Top" Foreground="#FF67AB2F" FontSize="18" MouseDown="OpenRegin" HorizontalAlignment="Right" Width="62"/>
+                <Label
+                x:Name="lNameUser"
+                Margin="10,137,10,0"
+                HorizontalContentAlignment="Center"
+                Content=""
+                VerticalAlignment="Top"/>
+                <Label
+                Content="Enter login:"
+                Margin="10,161,10,0"
+                VerticalAlignment="Top"/>
+                <TextBox
+                    x:Name="TbLogin"
+                    Height="23"
+                    Margin="10,185,10,0"
+                    TextWrapping="Wrap"
+                    Text=""
+                    VerticalAlignment="Top"
+                    KeyUp="SetLogin"
+                    LostFocus="SetLogin"/>
+
+                <uc:ElementCapture
+                    x:Name="Capture"
+                    HorizontalAlignment="Center"
+                    Width="280"
+                    Margin="10,213,10,0"
+                    Height="100"
+                    VerticalAlignment="Top"/>
+
+                <Label
+                    Content="Enter password:"
+                    Margin="10,318,10,0"
+                    VerticalAlignment="Top"/>
+
+                <PasswordBox
+                    x:Name="TbPassword"
+                    Margin="10,342,10,0"
+                    VerticalAlignment="Top"
+                    Height="26"
+                    KeyUp="SetPassword"/>
+
+                <Label
+                    Content="Forgot your password?"
+                    Margin="10,373,0,0"
+                    VerticalAlignment="Top"
+                    Foreground="#FF673AB7"
+                    FontSize="10"
+                    MouseDown="RecoveryPassword"
+                    HorizontalAlignment="Left"
+                    Width="110"/>
+                <Label
+                    Content="Registration"
+                    Margin="0,373,10,0"
+                    VerticalAlignment="Top"
+                    Foreground="#FF673AB7"
+                    FontSize="10"
+                    MouseDown="OpenRegion"
+                    HorizontalAlignment="Right"
+                    Width="62"/>
             </Grid>
         </materialDesign:Card>
     </Grid>
