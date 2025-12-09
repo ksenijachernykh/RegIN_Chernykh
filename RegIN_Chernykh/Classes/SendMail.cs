@@ -19,12 +19,12 @@ namespace RegIN_Chernykh.Classes
         {
             var smtpClient = new SmtpClient("smtp.yandex.ru")
             {
-                Port 587,
+                Port = 587,
                 Credentials = new NetworkCredential("yandexdyandex.ru", "password"),
-                EnableSs1 = true,
+                EnableSsl = true,
 
             };
-            smtpClient.Send("landaxer@yandex.ru", То, "Проект RegIn", Message);
+            smtpClient.Send("landaxer@yandex.ru", To, "Проект RegIn", Message);
         }
 
     }
