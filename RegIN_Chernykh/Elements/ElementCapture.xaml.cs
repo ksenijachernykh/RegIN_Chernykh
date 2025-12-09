@@ -52,7 +52,7 @@ namespace RegIN_Chernykh.Elements
         ///<summary>
         /// Функция создания капчи
         ///</summary>
-        private void CreateCapture()
+        public void CreateCapture()
         {
             InputCapture.Text = "";
             Capture.Children.Clear();
