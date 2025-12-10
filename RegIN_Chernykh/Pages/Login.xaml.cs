@@ -23,136 +23,64 @@ namespace RegIN_Chernykh.Pages
     /// <summary>
     /// Логика взаимодействия для Login.xaml
     /// </summary>
-    
+
 
 
     public partial class Login : Page
     {
-        /// <summary>
-        /// Логин введёный пользователем
-        /// </summary>
-        string OldLogin;
-
-        /// <summary>
-        /// Кол-во попыток ввода пароля
-        /// </summary>
         int CountSetPassword = 2;
-
-        /// <summary>
-        /// Переменная отвечающая за ввод капчи
-        /// </summary>
         bool IsCapture = false;
 
         public Login()
         {
             InitializeComponent();
+
             MainWindow.mainWindow.UserLogin.HandlerCorrectLogin += CorrectLogin;
             MainWindow.mainWindow.UserLogin.HandlerInCorrectLogin += InCorrectLogin;
             Capture.HandlerCorrectCapture += CorrectCapture;
         }
 
-        /// <summary>
-        /// Метод правильно введённого логина
-        /// </summary>
         public void CorrectLogin()
         {
-            if (OldLogin != TbLogin.Text)
+            if (TbLogin.Text != MainWindow.mainWindow.UserLogin.Login)
             {
-                SetNotification("Hi, " + MainWindow.mainWindow.UserLogIn.Name, Brushes.Black);
-                try
-                {
-                    BitmapImage bling = new BitmapImage();
-                    MemoryStream ms = new MemoryStream(MainWindow.mainWindow.UserLogIn.Image);
-                    bling.BeginInit();
-                    bling.StreamSource = ms;
-                    bling.EndInit();
-
-                    ImageSource imgSrc = bling;
-                    DoubleAnimation StartAnimation = new DoubleAnimation();
-                    StartAnimation.From = 1;
-                    StartAnimation.To = 0;
-                    StartAnimation.Duration = TimeSpan.FromSeconds(0.6);
-                    StartAnimation.Completed += delegate
-                    {
-                        IUser.Source = imgSrc;
-                        DoubleAnimation EndAnimation = new DoubleAnimation();
-                        EndAnimation.From = 0;
-                        EndAnimation.To = 1;
-                        EndAnimation.Duration = TimeSpan.FromSeconds(1.2);
-                        IUser.BeginAnimation(Image.OpacityProperty, EndAnimation);
-                    };
-
-                    IUser.BeginAnimation(Image.OpacityProperty, StartAnimation);
-                }
-                catch (Exception exp)
-                {
-                    Debug.WriteLine(exp.Message);
-                }
-
-                OldLogin = TbLogin.Text;
+                SetNotification($"Hi, {MainWindow.mainWindow.UserLogin.Name}", Brushes.Black);
+                UpdateImage(MainWindow.mainWindow.UserLogin.Image);
             }
         }
-
-        /// <summary>
-        /// Метод не успешной авторизации
-        /// </summary>
         public void InCorrectLogin()
         {
-            if (LNameUser.Content != "")
+            if (!string.IsNullOrEmpty(LNameUser.Content.ToString()))
             {
-                LNameUser.Content = "";
-                DoubleAnimation StartAnimation = new DoubleAnimation();
-                StartAnimation.From = 1;
-                StartAnimation.To = 0;
-                StartAnimation.Duration = TimeSpan.FromSeconds(0.6);
-                StartAnimation.Completed += delegate
-                {
-                    IUser.Source = new BitmapImage(new Uri("pack://application:,,./Images/ic-user.png"));
-                    DoubleAnimation EndAnimation = new DoubleAnimation();
-                    EndAnimation.From = 0;
-                    EndAnimation.To = 1;
-                    EndAnimation.Duration = TimeSpan.FromSeconds(1.2);
-                    IUser.BeginAnimation(OpacityProperty, EndAnimation);
-                };
-                IUser.BeginAnimation(OpacityProperty, StartAnimation);
-            }
-            if (TbLogin.Text.Length > 0)
                 SetNotification("Login is incorrect", Brushes.Red);
+                UpdateImage(new byte[] { });
+            }
         }
-
-        /// <summary>
-        /// Метод успешного ввода капчи
-        /// </summary>
         public void CorrectCapture()
         {
             Capture.IsEnabled = false;
             IsCapture = true;
         }
 
-        /// <summary>
-        /// Ввод пароля
-        /// </summary>
-        private void SetPassword(object sender, RoutedEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                SetPassword();
-        }
-
-        /// <summary>
-        /// Ввод пароля
-        /// </summary>
         public void SetPassword()
         {
-            if (MainWindow.mainWindow.UserLogIn.Password != String.Empty)
+            if (MainWindow.mainWindow.UserLogin.Password != String.Empty)
             {
                 if (IsCapture)
                 {
-                    if (MainWindow.mainWindow.UserLogIn.Password == TbPassword.Password)
+                    if (MainWindow.mainWindow.UserLogin.Password == TbPassword.Password)
                     {
-                        MainWindow.mainWindow.OpenPage(new Confirmation(Confirmation.TypeConfirmation.Login));
+                        if (string.IsNullOrEmpty(MainWindow.mainWindow.UserLogin.PinCode))
+                        {
+                            MainWindow.mainWindow.OpenPage(new Confirmation(Confirmation.TypeConfirmation.Login));
+                        }
+                        else
+                        {
+                            MainWindow.mainWindow.OpenPage(new PinCode());
+                        }
                     }
-                    else { 
-
+                    else
+                    {
                         if (CountSetPassword > 0)
                         {
                             SetNotification($"Password is incorrect, {CountSetPassword} attempts left", Brushes.Red);
@@ -160,22 +88,19 @@ namespace RegIN_Chernykh.Pages
                         }
                         else
                         {
-                            Thread TBlockAutorization = new Thread(BlockAutorization);
-                            TBlockAutorization.Start();
+                            Thread TBlockAuthorization = new Thread(BlockAuthorization);
+                            TBlockAuthorization.Start();
+                            SendMail.SendMessage("An attempt was made to log into your account.", MainWindow.mainWindow.UserLogin.Login);
                         }
-                        SendMail.SendMessage("An attempt was made to log into your account.", MainWindow.mainWindow.UserLogIn.Login);
                     }
                 }
                 else
-                    // Если капча не пройдена, вызываем ошибку, цвет - красный
+                {
                     SetNotification("Enter capture", Brushes.Red);
+                }
             }
         }
-
-        /// <summary>
-        /// Метод блокировки авторизации
-        /// </summary>
-        public void BlockAutorization()
+        public void BlockAuthorization()
         {
             DateTime StartBlock = DateTime.Now.AddMinutes(3);
             Dispatcher.Invoke(() =>
@@ -184,24 +109,17 @@ namespace RegIN_Chernykh.Pages
                 TbPassword.IsEnabled = false;
                 Capture.IsEnabled = false;
             });
-            for (int i = 0; i < 180; i++)
+
+            while (DateTime.Now < StartBlock)
             {
-                TimeSpan TimeIdle = StartBlock.Subtract(DateTime.Now);
-                string s_minutes = TimeIdle.Minutes.ToString();
-                if (TimeIdle.Minutes < 10)
-                    s_minutes = "0" + TimeIdle.Minutes;
-                string s_seconds = TimeIdle.Seconds.ToString();
-                if (TimeIdle.Seconds < 10)
-                    s_seconds = "0" + TimeIdle.Seconds;
-                Dispatcher.Invoke(() =>
-                {
-                    SetNotification($"Reauthorization available in: {s_minutes}:{s_seconds}", Brushes.Red);
-                });
+                TimeSpan remainingTime = StartBlock - DateTime.Now;
+                string timeRemaining = $"{remainingTime.Minutes:00}:{remainingTime.Seconds:00}";
+                Dispatcher.Invoke(() => SetNotification($"Reauthorization available in: {timeRemaining}", Brushes.Red));
                 Thread.Sleep(1000);
             }
             Dispatcher.Invoke(() =>
             {
-                SetNotification("Hi, " + MainWindow.mainWindow.UserLogIn.Name, Brushes.Black);
+                SetNotification($"Hi, {MainWindow.mainWindow.UserLogin.Name}", Brushes.Black);
                 TbLogin.IsEnabled = true;
                 TbPassword.IsEnabled = true;
                 Capture.IsEnabled = true;
@@ -211,54 +129,92 @@ namespace RegIN_Chernykh.Pages
             });
         }
 
-        /// <summary>
-        /// Ввод логина пользователя
-        /// </summary>
-        private void SetLogin(object sender, KeyEventArgs e)
+        private void UpdateImage(byte[] imageData)
         {
-            // При нажатии на кнопку Enter
-            if (e.Key == Key.Enter)
+            try
             {
-                // Вызываем метод получения данных пользователя по логину
-                MainWindow.mainWindow.UserLogin.GetUserLogin(TbLogin.Text);
+                BitmapImage biImg = new BitmapImage();
+                if (imageData.Length > 0)
+                {
+                    using (MemoryStream ms = new MemoryStream(imageData))
+                    {
+                        biImg.BeginInit();
+                        biImg.StreamSource = ms;
+                        biImg.EndInit();
+                    }
+                }
+                else
+                {
+                    biImg = new BitmapImage(new Uri("pack://application:,,,/Images/ic-user.png"));
+                }
+
+                AnimateImage(biImg);
             }
-            // Если пароль пользователя введён
-            if (TbPassword.Password.Length > 0)
-                // Вызываем метод ввода пароля
-                SetPassword();
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
-
-        /// <summary>
-        /// Ввод логина пользователя
-        /// </summary>
-        private void SetLogin(object sender, RoutedEventArgs e)
+        private void AnimateImage(ImageSource imgSrc)
         {
-            MainWindow.mainWindow.UserLogin.GetUserLogin(TbLogin.Text);
-            if (TbPassword.Password.Length > 0)
-                SetPassword();
+            DoubleAnimation startAnimation = new DoubleAnimation
+            {
+                From = 1,
+                To = 0,
+                Duration = TimeSpan.FromSeconds(0.6)
+            };
+
+            startAnimation.Completed += (sender, e) =>
+            {
+                IUser.Source = imgSrc;
+                DoubleAnimation endAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = 1,
+                    Duration = TimeSpan.FromSeconds(1.2)
+                };
+                IUser.BeginAnimation(Image.OpacityProperty, endAnimation);
+            };
+            IUser.BeginAnimation(Image.OpacityProperty, startAnimation);
         }
 
-        /// <summary>
-        /// Метод уведомлений пользователя
-        /// </summary>
-        /// <param name="Message">Сообщение которое необходимо вывести</param>
-        /// <param name="_Color">Цвет сообщения</param>
         public void SetNotification(string Message, SolidColorBrush _Color)
         {
             LNameUser.Content = Message;
             LNameUser.Foreground = _Color;
         }
 
-        /// <summary>
-        /// Метод открытия страницы восстановления пароля
-        /// </summary>
-        private void RecoveryPassword(object sender, MouseButtonEventArgs e) =>
-            MainWindow.mainWindow.OpenPage(new Recovery());
+        private void SetLogin(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                MainWindow.mainWindow.UserLogin.GetUserLogin(TbLogin.Text);
 
-        /// <summary>
-        /// Метод открытия страницы регистрации
-        /// </summary>
-        private void OpenBegin(object sender, MouseButtonEventArgs e) =>
-            MainWindow.mainWindow.OpenPage(new Begin());
+                if (TbPassword.Password.Length > 0)
+                {
+                    SetPassword();
+                }
+            }
+        }
+
+        private void SetPassword(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+                SetPassword();
+        }
+
+        private void RecoveryPassword(object sender, MouseButtonEventArgs e) => MainWindow.mainWindow.OpenPage(new Recovery());
+
+        private void OpenRegin(object sender, MouseButtonEventArgs e) => MainWindow.mainWindow.OpenPage(new Regin());
+
+        private void SetLogin(object sender, RoutedEventArgs e)
+        {
+            MainWindow.mainWindow.UserLogin.GetUserLogin(TbLogin.Text);
+
+            if (TbPassword.Password.Length > 0)
+            {
+                SetPassword();
+            }
+        }
     }
 }

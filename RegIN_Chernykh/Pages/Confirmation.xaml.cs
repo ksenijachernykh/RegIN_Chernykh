@@ -15,88 +15,71 @@ using System.Windows.Shapes;
 
 namespace RegIN_Chernykh.Pages
 {
-    /// <summary>
-    /// Тип перечисления для чего использутеся подтверждение
-    /// </summary>
-    public enum TypeConformation
-    {
-        Login,
-        Regin
-    }
-    /// <summary>
-    /// Для чего используется подтверждение
-    /// </summary>
-    TypeConformation ThisTypeConformation;
-    /// <summary>
-    /// Код отправленный на почту пользователя
-    /// </summary>
-    public int Code = 0;
     public partial class Confirmation : Page
     {
-        public Confirmation(TypeConformation TypeConformation)
+        public enum TypeConfirmation
+        {
+            Login,
+            Regin
+        }
+        TypeConfirmation ThisTypeConfirmation;
+        public int Code = 0;
+        public Confirmation(TypeConfirmation TypeConfirmation)
         {
             InitializeComponent();
-            ThisTypeConformation = TypeConformation;
+            ThisTypeConfirmation = TypeConfirmation;
             SendMailCode();
         }
         public void SendMailCode()
         {
-            Code = new Random().Next(100000, 9999999);
-            Classes.SendMail.SendMessage($"Login code: {Code}", MainWindow.mainWindow.UserLogIn.Login);
-            Thread TSendMailCode = new Thread(ThreadSendMailCode);
-            TSendMailCode.Start();
+            Code = new Random().Next(100000, 999999);
+            Classes.SendMail.SendMessage($"Login code: {Code}", MainWindow.mainWindow.UserLogin.Login);
+            TimerSendMailCode();
         }
-        public void TimerSendMailCode()
+        public async void TimerSendMailCode()
         {
             for (int i = 0; i < 60; i++)
             {
-                Dispatcher.Invoke(() =>
-                {
-                    LTimer.Content = $"A second message can be sent after {60 - i} seconds";
-                });
-                Thread.Sleep(1000);
+                LTimer.Content = $"A second message can be sent after {60 - i} seconds";
+                await Task.Delay(1000);
             }
 
-            Dispatcher.Invoke(() =>
-            {
-                BSendMessage.IsEnabled = true;
-                LTimer.Content = "";
-            });
+            BSendMessage.IsEnabled = true;
+            LTimer.Content = "";
         }
-        private void SendMail(object sender, RoutedEventArgs a)
-        {
-            SendMailCode();
-        }
+        private void SendMail(object sender, RoutedEventArgs e) => SendMailCode();
         private void SetCode(object sender, KeyEventArgs e)
         {
-            if(TbCode.Text == 6)
-            {
+            if (TbCode.Text.Length == 6)
                 SetCode();
-            }
+
         }
-        private void SetCode(object sender, RoutedEvetnArgs e) =>
-            SetCode();
+
+
+
+        private void SetCode(object sender, RoutedEventArgs e) => SetCode();
         void SetCode()
         {
             if (TbCode.Text == Code.ToString() && TbCode.IsEnabled == true)
             {
                 TbCode.IsEnabled = false;
 
-                if (ThisTypeConfirmation == TypeConfirmation.Login)
+                string message = ThisTypeConfirmation == TypeConfirmation.Login
+                    ? "Авторизация пользователя успешно подтверждена."
+                    : "Регистрация пользователя успешно подтверждена.";
+                MessageBox.Show(message);
+
+                if (ThisTypeConfirmation == TypeConfirmation.Regin)
                 {
-                    MessageBox.Show("Авторизация пользователя успешно подтверждена.");
+                    MainWindow.mainWindow.UserLogin.SetUser();
                 }
                 else
                 {
-                    MainWindow.mainWindow.UserLogin.SetUser();
-                    MessageBox.Show("Регистрация пользователя успешно подтверждена.");
+                    MainWindow.mainWindow.OpenPage(new PinCode());
                 }
             }
         }
-        private void OpenLogin(object sender, MouseButtonEvetArgs e)
-        {
-            MainWindow.mainWindow.OpenPages(new Login());
-        }
+        private void OpenLogin(object sender, MouseButtonEventArgs e) => MainWindow.mainWindow.OpenPage(new Login());
     }
-   
+
 }
