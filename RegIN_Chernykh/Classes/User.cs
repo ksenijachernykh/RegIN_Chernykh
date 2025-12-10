@@ -9,54 +9,21 @@ namespace RegIN_Chernykh.Classes
 {
     public class User
     {
-        ///<summary>
-        /// Код пользователя
-        ///</summary>
         public int Id { get; set; }
-        ///<summary>
-        /// Логин пользователя
-        ///</summary>
         public string Login { get; set; }
-        ///<summary>
-        /// Пароль пользователя
-        ///</summary>
         public string Password { get; set; }
-        ///<summary>
-        /// Имя пользователя
-        ///</summary>
         public string Name { get; set; }
-        ///<summary>
-        /// Изображение пользователя
-        ///</summary
-        public byte[] Image = new byte[0];
-        ///<summary>
-        /// Дата и время обновления пользователя
-        ///</summary
+        public byte[] Image { get; set; }
         public DateTime DateUpdate { get; set; }
-        ///<summary>
-        /// Дата и время создания пользователя
-        ///</summary
         public DateTime DateCreate { get; set; }
-        ///<summary>
-        /// Событие успешной авторизации
-        ///</summary
+        public string PinCode { get; set; }
+
         public CorrectLogin HandlerCorrectLogin;
-        ///<summary>
-        /// Событие не успешной авторизации
-        ///</summary
         public InCorrectLogin HandlerInCorrectLogin;
-        ///<summary>
-        /// Делегат успешной авторизации
-        ///</summary
+
         public delegate void CorrectLogin();
-        ///<summary>
-        /// Делегат не успешной авторизации
-        ///</summary
         public delegate void InCorrectLogin();
-        ///<summary>
-        /// Получение данных пользователя по логину
-        ///</summary
-        /// <param name="Login">Логин пользователя</param>
+
         public void GetUserLogin(string Login)
         {
             this.Id = -1;
@@ -64,6 +31,7 @@ namespace RegIN_Chernykh.Classes
             this.Password = String.Empty;
             this.Name = String.Empty;
             this.Image = new byte[0];
+            this.PinCode = String.Empty;
 
             MySqlConnection mySqlConnection = WorkingDB.OpenConnection();
             if (WorkingDB.OpenConnection(mySqlConnection))
@@ -83,6 +51,11 @@ namespace RegIN_Chernykh.Classes
                     }
                     this.DateUpdate = userQuery.GetDateTime(5);
                     this.DateCreate = userQuery.GetDateTime(6);
+                    if (!userQuery.IsDBNull(7))
+                        this.PinCode = userQuery.GetString(7);
+                    else
+                        this.PinCode = String.Empty;
+
                     HandlerCorrectLogin.Invoke();
                 }
                 else
@@ -94,32 +67,42 @@ namespace RegIN_Chernykh.Classes
             {
                 HandlerInCorrectLogin.Invoke();
             }
-
             WorkingDB.CloseConnection(mySqlConnection);
         }
-        ///<summary>
-        /// Функция сохранения пользователя
-        ///</ summary >
+
         public void SetUser()
         {
             MySqlConnection mySqlConnection = WorkingDB.OpenConnection();
             if (WorkingDB.OpenConnection(mySqlConnection))
             {
-                MySqlCommand mySqlCommand = new MySqlCommand("INSERT INTO users (Login, Password, Name, Image, DateUpdate, DateCreate) VALUES (@Login, @Password, @Name, @Image, @DateUpdate, @DateCreate)", mySqlConnection);
+                MySqlCommand mySqlCommand = new MySqlCommand("INSERT INTO `users` (`Login`, `Password`, `Name`, `Image`, `DateUpdate`, `DateCreate`, `PinCode`) VALUES (@Login, @Password, @Name, @Image, @DateUpdate, @DateCreate, @PinCode)",
+                mySqlConnection);
                 mySqlCommand.Parameters.AddWithValue("@Login", this.Login);
                 mySqlCommand.Parameters.AddWithValue("@Password", this.Password);
                 mySqlCommand.Parameters.AddWithValue("@Name", this.Name);
                 mySqlCommand.Parameters.AddWithValue("@Image", this.Image);
                 mySqlCommand.Parameters.AddWithValue("@DateUpdate", this.DateUpdate);
                 mySqlCommand.Parameters.AddWithValue("@DateCreate", this.DateCreate);
+                mySqlCommand.Parameters.AddWithValue("@PinCode", this.PinCode);
                 mySqlCommand.ExecuteNonQuery();
             }
             WorkingDB.CloseConnection(mySqlConnection);
         }
-        ///<summary>
-        /// Функция создания нового пароля
-        ///</ summary >
-        public void CrateNewPassword()
+
+        public void GetPinCode(string pinCode)
+        {
+            MySqlConnection mySqlConnection = WorkingDB.OpenConnection();
+            if (WorkingDB.OpenConnection(mySqlConnection))
+            {
+                MySqlCommand mySqlCommand = new MySqlCommand($"UPDATE `users` SET `PinCode` = '{pinCode}' WHERE `Login` = @Login", mySqlConnection);
+                mySqlCommand.Parameters.AddWithValue("@PinCode", this.PinCode);
+                mySqlCommand.Parameters.AddWithValue("@Login", this.Login);
+                mySqlCommand.ExecuteNonQuery();
+            }
+            WorkingDB.CloseConnection(mySqlConnection);
+        }
+
+        public void CreateNewPassword()
         {
             if (Login != String.Empty)
             {
@@ -127,22 +110,19 @@ namespace RegIN_Chernykh.Classes
                 MySqlConnection mySqlConnection = WorkingDB.OpenConnection();
                 if (WorkingDB.OpenConnection(mySqlConnection))
                 {
-                    WorkingDB.Query($"UPDATE users SET Password = '{this.Password}' WHERE Login = '{this.Login}'", mySqlConnection);
+                    WorkingDB.Query($"UPDATE `users` SET `Password` = '{this.Password}' WHERE `Login` = '{this.Login}'", mySqlConnection);
                 }
                 WorkingDB.CloseConnection(mySqlConnection);
                 SendMail.SendMessage($"Your account password has been changed.\nNew password: {this.Password}", this.Login);
             }
         }
-        ///<summary>
-        /// Функция генерации пароля
-        ///</ summary >
-        ///<returns></returns>
         public string GeneratePass()
         {
             List<Char> NewPassword = new List<char>();
             Random rnd = new Random();
-            char[] ArrNumbers = { '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-            char[] ArrSymbols = { '-', '_', '!', '@', '#', '$', '%', '^', '&', '*' };
+
+            char[] ArrNumbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+            char[] ArrSymbols = { '|', '-', '_', '!', '@', '#', '$', '%', '*', '=', '+' };
             char[] ArrUppercase = { 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm' };
 
             for (int i = 0; i < 1; i++)
@@ -161,10 +141,11 @@ namespace RegIN_Chernykh.Classes
                 NewPassword[RandomSymbol] = NewPassword[i];
                 NewPassword[i] = Symbol;
             }
-
             string NPassword = "";
             for (int i = 0; i < NewPassword.Count; i++)
+            {
                 NPassword += NewPassword[i];
+            }
             return NPassword;
         }
     }
